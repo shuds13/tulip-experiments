@@ -1,0 +1,20 @@
+(polyenv) shudson@compute-386-08:cuda$ opt -load libLLVMCudaFE.so -merge-kernel -mem2reg -indvars -dce fasten_standalone_linked.bc -o fasten_standalone_cpu.bc
+Stack dump:
+0. Program arguments: opt -load libLLVMCudaFE.so -merge-kernel -mem2reg -indvars -dce fasten_standalone_linked.bc -o fasten_standalone_cpu.bc
+1. Running pass 'merge cuda kernel back to main file' on module 'fasten_standalone_linked.bc'.
+ #0 0x000055defa1f4357 llvm::sys::PrintStackTrace(llvm::raw_ostream&) (/home/shudson/xcellent/llvm-install-debug/bin/opt+0x2041357)
+ #1 0x000055defa1f43f7 PrintStackTraceSignalHandler(void*) (/home/shudson/xcellent/llvm-install-debug/bin/opt+0x20413f7)
+ #2 0x000055defa1f21e8 llvm::sys::RunSignalHandlers() (/home/shudson/xcellent/llvm-install-debug/bin/opt+0x203f1e8)
+ #3 0x000055defa1f3ccc SignalHandler(int) (/home/shudson/xcellent/llvm-install-debug/bin/opt+0x2040ccc)
+ #4 0x00007f87d114e520 (/lib/x86_64-linux-gnu/libc.so.6+0x42520)
+ #5 0x000055def88d8850 llvm::Value::hasName() const (/home/shudson/xcellent/llvm-install-debug/bin/opt+0x725850)
+ #6 0x000055def9950f89 llvm::Value::getName() const (/home/shudson/xcellent/llvm-install-debug/bin/opt+0x179df89)
+ #7 0x00007f87d10a5363 (anonymous namespace)::MergeKernel::runOnModule(llvm::Module&) /u/zujunt/noelle-workspace/CudaFE/MergeKernel/mergeKernel.cpp:193:26
+ #8 0x000055def98afe8d (anonymous namespace)::MPPassManager::runOnModule(llvm::Module&) (/home/shudson/xcellent/llvm-install-debug/bin/opt+0x16fce8d)
+ #9 0x000055def98b06c2 llvm::legacy::PassManagerImpl::run(llvm::Module&) (/home/shudson/xcellent/llvm-install-debug/bin/opt+0x16fd6c2)
+#10 0x000055def98b08e5 llvm::legacy::PassManager::run(llvm::Module&) (/home/shudson/xcellent/llvm-install-debug/bin/opt+0x16fd8e5)
+#11 0x000055def885a074 main (/home/shudson/xcellent/llvm-install-debug/bin/opt+0x6a7074)
+#12 0x00007f87d1135d90 (/lib/x86_64-linux-gnu/libc.so.6+0x29d90)
+#13 0x00007f87d1135e40 __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x29e40)
+#14 0x000055def8815645 _start (/home/shudson/xcellent/llvm-install-debug/bin/opt+0x662645)
+Segmentation fault (core dumped)

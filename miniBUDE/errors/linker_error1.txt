@@ -1,0 +1,8 @@
+/usr/bin/ld: /tmp/fasten_cpu-66ebfe.o: in function `main':
+fasten_cpu.cbe.c:(.text+0x88): undefined reference to `cudaMalloc'
+/usr/bin/ld: fasten_cpu.cbe.c:(.text+0x97): undefined reference to `cudaMalloc'
+/usr/bin/ld: fasten_cpu.cbe.c:(.text+0xa6): undefined reference to `cudaMalloc'
+/usr/bin/ld: fasten_cpu.cbe.c:(.text+0x36b): undefined reference to `cudaMalloc'
+/usr/bin/ld: fasten_cpu.cbe.c:(.text+0x37a): undefined reference to `cudaMalloc'
+/usr/bin/ld: /tmp/fasten_cpu-66ebfe.o:fasten_cpu.cbe.c:(.text+0x389): more undefined references to `cudaMalloc' follow
+clang-9: error: linker command failed with exit code 1 (use -v to see invocation)

@@ -1,0 +1,95 @@
+(polyenv) shudson@compute-386-08:cuda$ /home/shudson/xcellent/llvm-install-debug/bin/splendid fasten_cpu.bc
+CBackend: iterating function 1759: llvm.dbg.declare
+CBackend: iterating function 1759: llvm.nvvm.read.ptx.sreg.ctaid.x
+CBackend: iterating function 1759: llvm.nvvm.read.ptx.sreg.ntid.x
+CBackend: iterating function 1759: llvm.nvvm.read.ptx.sreg.tid.x
+CBackend: iterating function 1759: llvm.memcpy.p0i8.p0i8.i64
+CBackend: iterating function 1759: llvm.nvvm.sqrt.f
+CBackend: iterating function 1759: llvm.nvvm.fabs.f
+CBackend: iterating function 1759: cudaSetupArgument
+CBackend: iterating function 1759: cudaLaunch
+CBackend: iterating function 1759: _Z14readBinaryFilePKcPvm
+CBackend: printing function 1770_Z14readBinaryFilePKcPvm
+SUSAN: added stderr to delete insts
+SUSAN: added stderr to delete insts
+=========LOOP PROFILES=========
+SUSAN: opnd0  %call = call noalias %struct._IO_FILE* @fopen(i8* %filename, i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str, i64 0, i64 0)), !dbg !1049
+SUSAN: opnd1%struct._IO_FILE* null
+SUSAN: opnd0  %call2 = call i64 @fread(i8* %data, i64 1, i64 %size, %struct._IO_FILE* %call), !dbg !1063
+SUSAN: opnd1i64 %size
+SUSAN: BB:
+entry:
+  call void @llvm.dbg.value(metadata i8* %filename, metadata !1045, metadata !DIExpression()), !dbg !1046
+  call void @llvm.dbg.value(metadata i8* %data, metadata !1047, metadata !DIExpression()), !dbg !1046
+  call void @llvm.dbg.value(metadata i64 %size, metadata !1048, metadata !DIExpression()), !dbg !1046
+  %call = call noalias %struct._IO_FILE* @fopen(i8* %filename, i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str, i64 0, i64 0)), !dbg !1049
+  call void @llvm.dbg.value(metadata %struct._IO_FILE* %call, metadata !1050, metadata !DIExpression()), !dbg !1046
+  %tobool = icmp ne %struct._IO_FILE* %call, null, !dbg !1056
+  br i1 %tobool, label %if.end, label %if.then, !dbg !1058
+
+SUSAN: BB:
+if.then:                                          ; preds = %entry
+  %0 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !dbg !1059
+  %call1 = call i32 (%struct._IO_FILE*, i8*, ...) @fprintf(%struct._IO_FILE* %0, i8* getelementptr inbounds ([31 x i8], [31 x i8]* @.str.1, i64 0, i64 0), i8* %filename), !dbg !1061
+  call void @exit(i32 1) #11, !dbg !1062
+  unreachable, !dbg !1062
+
+SUSAN: BB:
+if.end:                                           ; preds = %entry
+  %call2 = call i64 @fread(i8* %data, i64 1, i64 %size, %struct._IO_FILE* %call), !dbg !1063
+  call void @llvm.dbg.value(metadata i64 %call2, metadata !1064, metadata !DIExpression()), !dbg !1046
+  %cmp = icmp ne i64 %call2, %size, !dbg !1065
+  br i1 %cmp, label %if.then3, label %if.end5, !dbg !1067
+
+SUSAN: BB:
+if.then3:                                         ; preds = %if.end
+  %1 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !dbg !1068
+  %call4 = call i32 (%struct._IO_FILE*, i8*, ...) @fprintf(%struct._IO_FILE* %1, i8* getelementptr inbounds ([50 x i8], [50 x i8]* @.str.2, i64 0, i64 0), i64 %call2, i8* %filename, i64 %size), !dbg !1070
+  call void @exit(i32 1) #11, !dbg !1071
+  unreachable, !dbg !1071
+
+SUSAN: BB:
+if.end5:                                          ; preds = %if.end
+  %call6 = call i32 @fclose(%struct._IO_FILE* %call), !dbg !1072
+  ret void, !dbg !1073
+
+SUSAN: entry block is an if-else region! entry
+creating if-else region for entryBB: entry
+1
+1
+SUSAN: marking only true branch
+SUSAN: entry block is an if-else region! if.end
+creating if-else region for entryBB: if.end
+1
+1
+SUSAN: marking only true branch
+SUSAN: entry block is a linear region! if.then3
+=================SUSAN: END OF marking region : if.end==================
+SUSAN: currbb 562: if.end5
+SUSAN: entry block is a linear region! if.end5
+SUSAN: currbb 562:  #0 0x000056260a66b09d llvm::sys::PrintStackTrace(llvm::raw_ostream&) (/home/shudson/xcellent/llvm-install-debug/bin/splendid+0x205c09d)
+ #1 0x000056260a66b13d PrintStackTraceSignalHandler(void*) (/home/shudson/xcellent/llvm-install-debug/bin/splendid+0x205c13d)
+ #2 0x000056260a668f2e llvm::sys::RunSignalHandlers() (/home/shudson/xcellent/llvm-install-debug/bin/splendid+0x2059f2e)
+ #3 0x000056260a66aa12 SignalHandler(int) (/home/shudson/xcellent/llvm-install-debug/bin/splendid+0x205ba12)
+ #4 0x00007fbfe2940520 (/lib/x86_64-linux-gnu/libc.so.6+0x42520)
+ #5 0x0000562608c74818 llvm::Value::hasName() const (/home/shudson/xcellent/llvm-install-debug/bin/splendid+0x665818)
+ #6 0x0000562609e9d8fb llvm::Value::getName() const (/home/shudson/xcellent/llvm-install-debug/bin/splendid+0x188e8fb)
+ #7 0x00005626097080ea llvm_cbe::IfElseRegion::createSubIfElseRegions(llvm::BasicBlock*, llvm::BasicBlock*, llvm::BasicBlock*, bool) (/home/shudson/xcellent/llvm-install-debug/bin/splendid+0x10f90ea)
+ #8 0x0000562609707c7b llvm_cbe::IfElseRegion::IfElseRegion(llvm::BasicBlock*, llvm_cbe::CBERegion2*, llvm::PostDominatorTree*, llvm::DominatorTree*, llvm::LoopInfo*, llvm_cbe::CWriter*) (/home/shudson/xcellent/llvm-install-debug/bin/splendid+0x10f8c7b)
+ #9 0x000056260970a687 llvm_cbe::CBERegion2::createSubRegions(llvm_cbe::CBERegion2*, llvm::BasicBlock*) (/home/shudson/xcellent/llvm-install-debug/bin/splendid+0x10fb687)
+#10 0x000056260970832d llvm_cbe::CBERegion2::createCBERegionDAG(llvm::BasicBlock*, llvm_cbe::CBERegion2*, llvm::BasicBlock*) (.localalias) (/home/shudson/xcellent/llvm-install-debug/bin/splendid+0x10f932d)
+#11 0x000056260965d4cc llvm_cbe::CWriter::determineControlFlowTranslationMethod(llvm::Function&) (/home/shudson/xcellent/llvm-install-debug/bin/splendid+0x104e4cc)
+#12 0x000056260968b7f4 llvm_cbe::CWriter::RunAllAnalysis(llvm::Function&) (/home/shudson/xcellent/llvm-install-debug/bin/splendid+0x107c7f4)
+#13 0x0000562609663b5d llvm_cbe::CWriter::runOnModule(llvm::Module&) (/home/shudson/xcellent/llvm-install-debug/bin/splendid+0x1054b5d)
+#14 0x0000562609df34bf (anonymous namespace)::MPPassManager::runOnModule(llvm::Module&) (/home/shudson/xcellent/llvm-install-debug/bin/splendid+0x17e44bf)
+#15 0x0000562609df3cf4 llvm::legacy::PassManagerImpl::run(llvm::Module&) (/home/shudson/xcellent/llvm-install-debug/bin/splendid+0x17e4cf4)
+#16 0x0000562609df3f17 llvm::legacy::PassManager::run(llvm::Module&) (/home/shudson/xcellent/llvm-install-debug/bin/splendid+0x17e4f17)
+#17 0x0000562608c2be3f compileModule(char**, llvm::LLVMContext&) (/home/shudson/xcellent/llvm-install-debug/bin/splendid+0x61ce3f)
+#18 0x0000562608c2b1f9 main (/home/shudson/xcellent/llvm-install-debug/bin/splendid+0x61c1f9)
+#19 0x00007fbfe2927d90 (/lib/x86_64-linux-gnu/libc.so.6+0x29d90)
+#20 0x00007fbfe2927e40 __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x29e40)
+#21 0x0000562608c296e5 _start (/home/shudson/xcellent/llvm-install-debug/bin/splendid+0x61a6e5)
+Stack dump:
+0.	Program arguments: /home/shudson/xcellent/llvm-install-debug/bin/splendid fasten_cpu.bc 
+1.	Running pass 'C backend' on module 'fasten_cpu.bc'.
+Segmentation fault (core dumped)

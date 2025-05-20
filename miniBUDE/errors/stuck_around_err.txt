@@ -1,0 +1,6 @@
+mergeKernel: new function kernel Args: i32 0
+mergeKernel: new function kernel Args: i32 0
+While deleting: i32 %call508
+Use still stuck around after Def is destroyed:  store i32 %call508, i32* %err507, align 4, !dbg !2014
+opt: /scratch/xcellent/shudson/llvm-project/llvm/lib/IR/Value.cpp:91: llvm::Value::~Value(): Assertion `use_empty() && "Uses remain when a value is destroyed!"' failed.
+
