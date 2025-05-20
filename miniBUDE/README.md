@@ -10,9 +10,9 @@ In the first instance from CUDA to OpenMP for the CPU.
 
 The Tulip tool-chain requires standalone examples (with a main function), which means the following files need to be combined:
 
-`src/main.cpp` - Host code.
-`src/bude.h` - defines the common data types.
-`src/cuda/fasten.hpp` - CUDA implementation of fasten kernel.
+- `src/main.cpp` - Host code.
+- `src/bude.h` - defines the common data types.
+- `src/cuda/fasten.hpp` - CUDA implementation of fasten kernel.
 
 These have been combined into a file:
 
