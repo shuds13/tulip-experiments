@@ -16,7 +16,7 @@ The Tulip tool-chain requires standalone examples (with a main function), which 
 
 These have been combined into a file:
 
-`fasten_standalone.cu`
+`fasten.cu`
 
 Modifications also need to be made as there are several features that are currently unsupported, such as C++ templates.
 
