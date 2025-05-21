@@ -45,9 +45,9 @@ int main()
 
     // Allocate device memory
     float *d_a, *d_b, *d_c;
-    cudaMalloc((void**)&d_a, N * sizeof(float));
-    cudaMalloc((void**)&d_b, N * sizeof(float));
-    cudaMalloc((void**)&d_c, N * sizeof(float));
+    cudaMalloc(&d_a, N * sizeof(float));
+    cudaMalloc(&d_b, N * sizeof(float));
+    cudaMalloc(&d_c, N * sizeof(float));
 
     // Copy host memory to device
     cudaMemcpy(d_a, h_a, N * sizeof(float), cudaMemcpyHostToDevice);
@@ -96,9 +96,9 @@ int main()
 
     // Allocate device memory
     Atom *d_atoms_a, *d_atoms_b, *d_atoms_c;
-    cudaMalloc((void**)&d_atoms_a, N * sizeof(Atom));
-    cudaMalloc((void**)&d_atoms_b, N * sizeof(Atom));
-    cudaMalloc((void**)&d_atoms_c, N * sizeof(Atom));
+    cudaMalloc(&d_atoms_a, N * sizeof(Atom));
+    cudaMalloc(&d_atoms_b, N * sizeof(Atom));
+    cudaMalloc(&d_atoms_c, N * sizeof(Atom));
 
     // Copy host memory to device
     cudaMemcpy(d_atoms_a, h_atoms_a, N * sizeof(Atom), cudaMemcpyHostToDevice);
