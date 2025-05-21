@@ -33,7 +33,7 @@ Converted c++ to C, including removal of templates.
 
 Removed sin/cos functions as these cause failure in LLVM kernel merger (opt -load ...) - see errors/sin_cos_err.txt
 
-This passes the kernel merge, but fails in the Splendid decompiler. The crash occurs in llvm_cbe::IfElseRegion::createSubIfElseRegions when trying to analyze control flow structures, trying to process a value without a name. See errors/splendid_err1.txt
+This passes the kernel merge, but fails in the Splendid decompiler. The crash occurs in `llvm_cbe::IfElseRegion::createSubIfElseRegions` when trying to analyze control flow structures, trying to process a value without a name. See errors/splendid_err1.txt
 
 ### fasten_simple_1.cu:
 
