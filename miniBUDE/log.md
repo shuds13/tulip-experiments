@@ -27,7 +27,7 @@ clang -fopenmp -O3 fasten_cpu.cbe.c -o tulip.clang.fasten.exe
 
 ## Files
 
-fasten.cu:
+### fasten.cu
 
 Converted c++ to C, including removal of templates.
 
@@ -39,3 +39,6 @@ fasten_simple_1.cu:
 
 Simplified logic passes splendid step but fails in the linker when try to compile the generated file "undefined reference to `cudaMalloc'" suggesting that CUDA calls were not substitued properly. See linker_error1.txt.
 
+### fasten_simple_1.cu:
+
+Very simplified example that makes it through the full tool chain and produces output.
