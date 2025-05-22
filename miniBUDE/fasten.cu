@@ -19,7 +19,7 @@
 #define NPNPDIST 5.5f
 #define NPPDIST 1.0f
 #define FloatMax 3.40282347e+38f  // std::numeric_limits<float>::max()
-#define USE_SHARED 1  // SH Changed from empty definition to value 1 for evaluation in expressions
+// #define USE_SHARED 0  // SH Changed from empty definition to value 1 for evaluation in expressions
 
 // Define a simple Atom structure
 struct Atom {
@@ -35,13 +35,20 @@ struct FFParams {
   float elsc;
 };
 
+// SH fabsf fails in splendid
+// LLVM ERROR: Code generator does not support intrinsic function 'llvm.nvvm.fabs.f'!
+static __forceinline__ __device__ __host__
+float fasten_fabsf(float x) {
+    return x < 0.0f ? -x : x;
+}
+
 // A simplified kernel implementation that avoids sin/cos and complex memory patterns
 __global__ void fasten_kernel(int natlig, int natpro,
                            const Atom* protein_molecule,
                            const Atom* ligand_molecule,
                            const float* transforms_0, const float* transforms_1, const float* transforms_2,
                            const float* transforms_3, const float* transforms_4, const float* transforms_5,
-                           float* etotals, const FFParams* global_forcefield, int numTransforms, int ntypes) {
+                           float* etotals, const FFParams* forcefield, int numTransforms, int ntypes) {
   // Get index of first transform
   int ix = blockIdx.x * blockDim.x * PPWI + threadIdx.x;
   
@@ -49,15 +56,15 @@ __global__ void fasten_kernel(int natlig, int natpro,
   ix = ix < numTransforms ? ix : numTransforms - PPWI;
   
   // Use shared memory for forcefield parameters
-#ifdef USE_SHARED
-  extern __shared__ FFParams forcefield[];
-  if (threadIdx.x < ntypes) {
-    forcefield[threadIdx.x] = global_forcefield[threadIdx.x];
-  }
-  __syncthreads(); // Ensure all threads have loaded the forcefield data
-#else
-  const FFParams* forcefield = global_forcefield;
-#endif
+// #ifdef USE_SHARED
+//   extern __shared__ FFParams forcefield[];
+//   if (threadIdx.x < ntypes) {
+//     forcefield[threadIdx.x] = global_forcefield[threadIdx.x];
+//   }
+//   __syncthreads(); // Ensure all threads have loaded the forcefield data
+// #else
+//   const FFParams* forcefield = global_forcefield;
+// #endif
   
   // Compute transformation matrices for all poses in this work item
   float transform[PPWI][3][4]; // [pose][row][column]
@@ -150,7 +157,7 @@ __global__ void fasten_kernel(int natlig, int natpro,
         // Calculate formal and dipole charge interactions
         float chrg_e = chrg_init;
         chrg_e *= ((zone1 ? ONE : (ONE - distbb * elcdst1)) * (distbb < elcdst ? ONE : ZERO));
-        const float neg_chrg_e = -fabsf(chrg_e);
+        const float neg_chrg_e = -fasten_fabsf(chrg_e);
         chrg_e = type_E ? neg_chrg_e : chrg_e;
         etot[i] += chrg_e * CNSTNT;
         
@@ -172,38 +179,6 @@ __global__ void fasten_kernel(int natlig, int natpro,
   }
 }
 
-// Function to read binary file
-void readBinaryFile(const char *filename, void *data, size_t size) {
-    FILE *file = fopen(filename, "rb");
-    if (!file) {
-        fprintf(stderr, "Error: Could not open file %s\n", filename);
-        exit(EXIT_FAILURE);
-    }
-    
-    size_t read = fread(data, 1, size, file);
-    if (read != size) {
-        fprintf(stderr, "Error: Read only %zu bytes from %s, expected %zu\n", read, filename, size);
-        exit(EXIT_FAILURE);
-    }
-    
-    fclose(file);
-}
-
-// Function to get file size
-size_t getFileSize(const char *filename) {
-    FILE *file = fopen(filename, "rb");
-    if (!file) {
-        fprintf(stderr, "Error: Could not open file %s\n", filename);
-        exit(EXIT_FAILURE);
-    }
-    
-    fseek(file, 0, SEEK_END);
-    size_t size = ftell(file);
-    fclose(file);
-    
-    return size;
-}
-
 // Function to get time in milliseconds
 double getTimeMs() {
     struct timeval tv;
@@ -218,33 +193,28 @@ void getTimeString(char *buf, size_t len) {
     strftime(buf, len, "%Y-%m-%d %H:%M:%S", timeinfo);
 }
 
-int main(int argc, char **argv)
+// int main(int argc, char **argv)
+int main(void)
 {
     // Default parameters
-    const char *deckDir = NULL;
     int iterations = 1;
     int numThreads = 64;
-    int useInputFiles = 0;
     
-    // Parse command line arguments
-    for (int i = 1; i < argc; i++) {
-        if (strcmp(argv[i], "--deck") == 0 && i+1 < argc) {
-            deckDir = argv[++i];
-            useInputFiles = 1;
-        } else if (strcmp(argv[i], "--iter") == 0 && i+1 < argc) {
-            iterations = atoi(argv[++i]);
-        } else if (strcmp(argv[i], "--wgsize") == 0 && i+1 < argc) {
-            numThreads = atoi(argv[++i]);
-        } else if (strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0) {
-            printf("Usage: %s [options]\n", argv[0]);
-            printf("Options:\n");
-            printf("  --deck DIR      Data deck directory (default: use sample data)\n");
-            printf("  --iter N        Number of iterations (default: 1)\n");
-            printf("  --wgsize N      Work group size (default: 64)\n");
-            printf("  --help, -h      Show this help message\n");
-            return 0;
-        }
-    }
+    // // Parse command line arguments
+    // for (int i = 1; i < argc; i++) {
+    //     if (strcmp(argv[i], "--iter") == 0 && i+1 < argc) {
+    //         iterations = atoi(argv[++i]);
+    //     } else if (strcmp(argv[i], "--wgsize") == 0 && i+1 < argc) {
+    //         numThreads = atoi(argv[++i]);
+    //     } else if (strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0) {
+    //         printf("Usage: %s [options]\n", argv[0]);
+    //         printf("Options:\n");
+    //         printf("  --iter N        Number of iterations (default: 1)\n");
+    //         printf("  --wgsize N      Work group size (default: 64)\n");
+    //         printf("  --help, -h      Show this help message\n");
+    //         return 0;
+    //     }
+    // }
     
     // Display header with time
     char timeStr[64];
@@ -252,137 +222,59 @@ int main(int argc, char **argv)
     printf("=== FASTEN CUDA Implementation ===\n");
     printf("Time: %s\n\n", timeStr);
     
-    // Don't use device selection - just use the default device
+    // Initialize with sample data
+    int natpro = 5;
+    int natlig = 3;
+    int ntypes = 10;
+    int nposes = 32;
     
-    // Initialize parameters
-    int natpro = 0;
-    int natlig = 0;
-    int ntypes = 0;
-    int nposes = 0;
+    printf("Using sample data: %d ligands, %d proteins, %d forcefield types, %d poses\n", 
+          natlig, natpro, ntypes, nposes);
     
-    Atom *h_protein = NULL;
-    Atom *h_ligand = NULL;
-    FFParams *h_forcefield = NULL;
-    float *h_transforms_0 = NULL;
-    float *h_transforms_1 = NULL;
-    float *h_transforms_2 = NULL;
-    float *h_transforms_3 = NULL;
-    float *h_transforms_4 = NULL;
-    float *h_transforms_5 = NULL;
-    float *h_results = NULL;
+    // Allocate host memory
+    Atom *h_protein = (Atom*)malloc(natpro * sizeof(Atom));
+    Atom *h_ligand = (Atom*)malloc(natlig * sizeof(Atom));
+    FFParams *h_forcefield = (FFParams*)malloc(ntypes * sizeof(FFParams));
+    float *h_transforms_0 = (float*)malloc(nposes * sizeof(float));
+    float *h_transforms_1 = (float*)malloc(nposes * sizeof(float));
+    float *h_transforms_2 = (float*)malloc(nposes * sizeof(float));
+    float *h_transforms_3 = (float*)malloc(nposes * sizeof(float));
+    float *h_transforms_4 = (float*)malloc(nposes * sizeof(float));
+    float *h_transforms_5 = (float*)malloc(nposes * sizeof(float));
+    float *h_results = (float*)malloc(nposes * sizeof(float));
     
-    // If deck directory is provided, read input files
-    if (useInputFiles && deckDir) {
-        printf("Reading input files from %s\n", deckDir);
-        
-        char ligandPath[512], proteinPath[512], forcefieldPath[512], posesPath[512];
-        sprintf(ligandPath, "%s/ligand.in", deckDir);
-        sprintf(proteinPath, "%s/protein.in", deckDir);
-        sprintf(forcefieldPath, "%s/forcefield.in", deckDir);
-        sprintf(posesPath, "%s/poses.in", deckDir);
-        
-        // Get file sizes
-        size_t ligandSize = getFileSize(ligandPath);
-        size_t proteinSize = getFileSize(proteinPath);
-        size_t forcefieldSize = getFileSize(forcefieldPath);
-        size_t posesSize = getFileSize(posesPath);
-        
-        // Calculate counts
-        natlig = ligandSize / sizeof(Atom);
-        natpro = proteinSize / sizeof(Atom);
-        ntypes = forcefieldSize / sizeof(FFParams);
-        nposes = posesSize / (6 * sizeof(float)); // 6 float values per pose
-        
-        printf("Data sizes: %d ligands, %d proteins, %d forcefield types, %d poses\n", 
-              natlig, natpro, ntypes, nposes);
-        
-        // Allocate memory
-        h_protein = (Atom*)malloc(natpro * sizeof(Atom));
-        h_ligand = (Atom*)malloc(natlig * sizeof(Atom));
-        h_forcefield = (FFParams*)malloc(ntypes * sizeof(FFParams));
-        float *h_poses = (float*)malloc(posesSize);
-        h_transforms_0 = (float*)malloc(nposes * sizeof(float));
-        h_transforms_1 = (float*)malloc(nposes * sizeof(float));
-        h_transforms_2 = (float*)malloc(nposes * sizeof(float));
-        h_transforms_3 = (float*)malloc(nposes * sizeof(float));
-        h_transforms_4 = (float*)malloc(nposes * sizeof(float));
-        h_transforms_5 = (float*)malloc(nposes * sizeof(float));
-        h_results = (float*)malloc(nposes * sizeof(float));
-        
-        // Read data
-        readBinaryFile(ligandPath, h_ligand, ligandSize);
-        readBinaryFile(proteinPath, h_protein, proteinSize);
-        readBinaryFile(forcefieldPath, h_forcefield, forcefieldSize);
-        readBinaryFile(posesPath, h_poses, posesSize);
-        
-        // Convert poses from AoS to SoA
-        for (int i = 0; i < nposes; i++) {
-            // Instead of computing sin/cos, pass the angles directly
-            h_transforms_0[i] = h_poses[i];                  // rx
-            h_transforms_1[i] = h_poses[i + nposes];         // ry
-            h_transforms_2[i] = h_poses[i + 2 * nposes];     // rz
-            h_transforms_3[i] = h_poses[i + 3 * nposes];     // tx
-            h_transforms_4[i] = h_poses[i + 4 * nposes];     // ty
-            h_transforms_5[i] = h_poses[i + 5 * nposes];     // tz
-        }
-        
-        // Free temporary memory
-        free(h_poses);
-    } else {
-        // Use default sample data
-        natpro = 5;
-        natlig = 3;
-        ntypes = 10;
-        nposes = 32;
-        
-        printf("Using sample data: %d ligands, %d proteins, %d forcefield types, %d poses\n", 
-              natlig, natpro, ntypes, nposes);
-        
-        // Allocate host memory
-        h_protein = (Atom*)malloc(natpro * sizeof(Atom));
-        h_ligand = (Atom*)malloc(natlig * sizeof(Atom));
-        h_forcefield = (FFParams*)malloc(ntypes * sizeof(FFParams));
-        h_transforms_0 = (float*)malloc(nposes * sizeof(float));
-        h_transforms_1 = (float*)malloc(nposes * sizeof(float));
-        h_transforms_2 = (float*)malloc(nposes * sizeof(float));
-        h_transforms_3 = (float*)malloc(nposes * sizeof(float));
-        h_transforms_4 = (float*)malloc(nposes * sizeof(float));
-        h_transforms_5 = (float*)malloc(nposes * sizeof(float));
-        h_results = (float*)malloc(nposes * sizeof(float));
-        
-        // Initialize protein array
-        for (int i = 0; i < natpro; i++) {
-            h_protein[i].x = i * 0.1f;
-            h_protein[i].y = i * 0.2f;
-            h_protein[i].z = i * 0.3f;
-            h_protein[i].type = i % ntypes;
-        }
-        
-        // Initialize ligand array
-        for (int i = 0; i < natlig; i++) {
-            h_ligand[i].x = i * 0.5f;
-            h_ligand[i].y = i * 0.6f;
-            h_ligand[i].z = i * 0.7f;
-            h_ligand[i].type = i % ntypes;
-        }
-        
-        // Initialize forcefield parameters
-        for (int i = 0; i < ntypes; i++) {
-            h_forcefield[i].hbtype = (i % 2 == 0) ? HBTYPE_F : HBTYPE_E;
-            h_forcefield[i].radius = 1.5f + i * 0.1f;
-            h_forcefield[i].hphb = (i % 2 == 0) ? -1.0f : 1.0f; 
-            h_forcefield[i].elsc = 0.5f + i * 0.05f;
-        }
-        
-        // Initialize transform data - using angles directly
-        for (int i = 0; i < nposes; i++) {
-            h_transforms_0[i] = 0.1f * i;  // Angle X
-            h_transforms_1[i] = 0.2f * i;  // Angle Y
-            h_transforms_2[i] = 0.3f * i;  // Angle Z
-            h_transforms_3[i] = 10.0f + i * 0.1f;  // Translation X
-            h_transforms_4[i] = 5.0f - i * 0.05f;  // Translation Y
-            h_transforms_5[i] = -3.0f + i * 0.02f; // Translation Z
-        }
+    // Initialize protein array
+    for (int i = 0; i < natpro; i++) {
+        h_protein[i].x = i * 0.1f;
+        h_protein[i].y = i * 0.2f;
+        h_protein[i].z = i * 0.3f;
+        h_protein[i].type = i % ntypes;
+    }
+    
+    // Initialize ligand array
+    for (int i = 0; i < natlig; i++) {
+        h_ligand[i].x = i * 0.5f;
+        h_ligand[i].y = i * 0.6f;
+        h_ligand[i].z = i * 0.7f;
+        h_ligand[i].type = i % ntypes;
+    }
+    
+    // Initialize forcefield parameters
+    for (int i = 0; i < ntypes; i++) {
+        h_forcefield[i].hbtype = (i % 2 == 0) ? HBTYPE_F : HBTYPE_E;
+        h_forcefield[i].radius = 1.5f + i * 0.1f;
+        h_forcefield[i].hphb = (i % 2 == 0) ? -1.0f : 1.0f; 
+        h_forcefield[i].elsc = 0.5f + i * 0.05f;
+    }
+    
+    // Initialize transform data - using angles directly
+    for (int i = 0; i < nposes; i++) {
+        h_transforms_0[i] = 0.1f * i;  // Angle X
+        h_transforms_1[i] = 0.2f * i;  // Angle Y
+        h_transforms_2[i] = 0.3f * i;  // Angle Z
+        h_transforms_3[i] = 10.0f + i * 0.1f;  // Translation X
+        h_transforms_4[i] = 5.0f - i * 0.05f;  // Translation Y
+        h_transforms_5[i] = -3.0f + i * 0.02f; // Translation Z
     }
     
     // Allocate device memory - WITHOUT error checking
@@ -393,17 +285,19 @@ int main(int argc, char **argv)
     float *d_transforms_3, *d_transforms_4, *d_transforms_5;
     float *d_results;
     
-    cudaMalloc((void**)&d_protein, natpro * sizeof(Atom));
-    cudaMalloc((void**)&d_ligand, natlig * sizeof(Atom));
-    cudaMalloc((void**)&d_forcefield, ntypes * sizeof(FFParams));
-    cudaMalloc((void**)&d_transforms_0, nposes * sizeof(float));
-    cudaMalloc((void**)&d_transforms_1, nposes * sizeof(float));
-    cudaMalloc((void**)&d_transforms_2, nposes * sizeof(float));
-    cudaMalloc((void**)&d_transforms_3, nposes * sizeof(float));
-    cudaMalloc((void**)&d_transforms_4, nposes * sizeof(float));
-    cudaMalloc((void**)&d_transforms_5, nposes * sizeof(float));
-    cudaMalloc((void**)&d_results, nposes * sizeof(float));
-    
+    cudaMalloc(&d_protein, natpro * sizeof(Atom));
+    cudaMalloc(&d_ligand, natlig * sizeof(Atom));
+    cudaMalloc(&d_forcefield, ntypes * sizeof(FFParams));
+    cudaMalloc(&d_transforms_0, nposes * sizeof(float));
+    cudaMalloc(&d_transforms_1, nposes * sizeof(float));
+    cudaMalloc(&d_transforms_2, nposes * sizeof(float));
+    cudaMalloc(&d_transforms_3, nposes * sizeof(float));
+    cudaMalloc(&d_transforms_4, nposes * sizeof(float));
+    cudaMalloc(&d_transforms_5, nposes * sizeof(float));
+    cudaMalloc(&d_results, nposes * sizeof(float));
+    cudaMalloc(&d_forcefield, ntypes * sizeof(FFParams));
+    cudaMemcpy(d_forcefield, h_forcefield, ntypes * sizeof(FFParams), cudaMemcpyHostToDevice);
+
     // Copy host memory to device - WITHOUT error checking
     cudaMemcpy(d_protein, h_protein, natpro * sizeof(Atom), cudaMemcpyHostToDevice);
     cudaMemcpy(d_ligand, h_ligand, natlig * sizeof(Atom), cudaMemcpyHostToDevice);
@@ -463,26 +357,26 @@ int main(int argc, char **argv)
     }
     avgEnergy /= nposes;
     
-    // Print timing and performance information
-    printf("\nPerformance Results:\n");
-    printf("  Total Time: %.3f ms\n", totalTime);
-    printf("  Time per Iteration: %.3f ms\n", timePerIteration);
-    printf("  Poses Processed: %d\n", nposes * iterations);
-    printf("  Processing Rate: %.2f poses/ms (%.2f poses/second)\n",
-           (nposes * iterations) / totalTime,
-           (nposes * iterations) / totalTime * 1000.0);
+    // // Print timing and performance information
+    // printf("\nPerformance Results:\n");
+    // printf("  Total Time: %.3f ms\n", totalTime);
+    // printf("  Time per Iteration: %.3f ms\n", timePerIteration);
+    // printf("  Poses Processed: %d\n", nposes * iterations);
+    // printf("  Processing Rate: %.2f poses/ms (%.2f poses/second)\n",
+    //        (nposes * iterations) / totalTime,
+    //        (nposes * iterations) / totalTime * 1000.0);
     
-    // Print energy statistics
-    printf("\nEnergy Statistics:\n");
-    printf("  Min Energy: %.4f\n", minEnergy);
-    printf("  Max Energy: %.4f\n", maxEnergy);
-    printf("  Avg Energy: %.4f\n", avgEnergy);
+    // // Print energy statistics
+    // printf("\nEnergy Statistics:\n");
+    // printf("  Min Energy: %.4f\n", minEnergy);
+    // printf("  Max Energy: %.4f\n", maxEnergy);
+    // printf("  Avg Energy: %.4f\n", avgEnergy);
     
-    // Print sample energy values
-    printf("\nEnergy results (showing %d):\n", nposes < 10 ? nposes : 10);
-    for (int i = 0; i < nposes && i < 10; i++) {
-        printf("  Pose %d: %.4f\n", i, h_results[i]);
-    }
+    // // Print sample energy values
+    // printf("\nEnergy results (showing %d):\n", nposes < 10 ? nposes : 10);
+    // for (int i = 0; i < nposes && i < 10; i++) {
+    //     printf("  Pose %d: %.4f\n", i, h_results[i]);
+    // }
     
     // Free memory
     free(h_protein);
