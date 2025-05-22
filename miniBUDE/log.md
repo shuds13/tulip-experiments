@@ -25,6 +25,10 @@ clang -fopenmp -O3 fasten_cpu.cbe.c -o tulip.clang.fasten.exe
 
 ```
 
+## Viewing output
+
+Small error logs referred to here can be found in the [errors](errors/) directory. Some larger error outputs are in the [tulip_data_files](https://github.com/shuds13/tulip_data_files) repository.
+
 ## Files
 
 ### fasten.cu
