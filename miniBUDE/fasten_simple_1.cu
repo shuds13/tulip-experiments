@@ -7,11 +7,14 @@ struct Atom {
     int type;
 };
 
-#define N 10
+// Calculate number of blocks needed
+static unsigned num_blocks(int num, int factor) {
+    return (num + factor - 1) / factor;
+}
 
 __global__ void vector_add(float *a, float *b, float *c, int n)
 {
-    int i = threadIdx.x;
+    int i = blockDim.x * blockIdx.x + threadIdx.x;
     if (i < n)
         c[i] = a[i] + b[i];
 }
@@ -19,7 +22,7 @@ __global__ void vector_add(float *a, float *b, float *c, int n)
 // A simple kernel that uses Atom structure but has same structure as vector_add
 __global__ void atom_add(Atom *atoms_a, Atom *atoms_b, Atom *atoms_c, int n)
 {
-    int i = threadIdx.x;
+    int i = blockDim.x * blockIdx.x + threadIdx.x;
     if (i < n) {
         atoms_c[i].x = atoms_a[i].x + atoms_b[i].x;
         atoms_c[i].y = atoms_a[i].y + atoms_b[i].y;
@@ -28,8 +31,14 @@ __global__ void atom_add(Atom *atoms_a, Atom *atoms_b, Atom *atoms_c, int n)
     }
 }
 
-int main()
+int main(int argc, char** argv)
 {
+    // Check for command line argument
+    if (argc < 2) {
+        fprintf(stderr, "Usage: %s N\n", argv[0]);
+        return 1;
+    }
+    int N = atoi(argv[1]);
     // Test vector_add first to verify it still works
     // Allocate host memory
     float *h_a = (float*)malloc(N * sizeof(float));
@@ -54,7 +63,15 @@ int main()
     cudaMemcpy(d_b, h_b, N * sizeof(float), cudaMemcpyHostToDevice);
 
     // Execute kernel
-    vector_add<<<1, N>>>(d_a, d_b, d_c, N);
+    // vector_add<<<1, N>>>(d_a, d_b, d_c, N);
+
+
+    // Execute kernel
+    const int threadsPerBlock = 256;
+    int blocksNeeded = num_blocks(N, threadsPerBlock);
+    vector_add<<<blocksNeeded, threadsPerBlock>>>(d_a, d_b, d_c, N);
+    cudaDeviceSynchronize();
+
 
     // Copy device memory to host
     cudaMemcpy(h_c, d_c, N * sizeof(float), cudaMemcpyDeviceToHost);
@@ -105,7 +122,10 @@ int main()
     cudaMemcpy(d_atoms_b, h_atoms_b, N * sizeof(Atom), cudaMemcpyHostToDevice);
 
     // Execute kernel
-    atom_add<<<1, N>>>(d_atoms_a, d_atoms_b, d_atoms_c, N);
+    // const int threadsPerBlock = 256;
+    // int blocksNeeded = num_blocks(N, threadsPerBlock);
+    atom_add<<<blocksNeeded, threadsPerBlock>>>(d_atoms_a, d_atoms_b, d_atoms_c, N);
+    cudaDeviceSynchronize();
 
     // Copy device memory to host
     cudaMemcpy(h_atoms_c, d_atoms_c, N * sizeof(Atom), cudaMemcpyDeviceToHost);
