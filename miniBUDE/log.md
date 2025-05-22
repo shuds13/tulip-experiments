@@ -45,9 +45,11 @@ This passes the kernel merge, but fails in the Splendid decompiler. The crash oc
 
 Very simplified example that makes it through the full tool chain and produces output.
 
-Old: Simplified logic passes splendid step but fails in the linker when try to compile the generated file "undefined reference to `cudaMalloc'" suggesting that CUDA calls were not substitued properly. See [errors/linker_error1.txt](errors/linker_error1.txt).
-- the cudaMallocs were not tagged by Splendid with `!tulip.target.mapdata` as they are for xstack examples.
-- fixed by removing void declarations.
+***Old***: 
+ - Simplified logic passes splendid step but fails in the linker when try to compile the generated file `undefined reference to `cudaMalloc'` suggesting that CUDA calls were not substitued properly.
+  - See [errors/linker_error1.txt](errors/linker_error1.txt).
+  - the cudaMallocs were not tagged by Splendid with `!tulip.target.mapdata` as they are for xstack examples.
+ - fixed by removing void declarations.
 
 
 
