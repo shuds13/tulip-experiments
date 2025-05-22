@@ -20,4 +20,4 @@ These have been combined into a file:
 
 Modifications also need to be made as there are several features that are currently unsupported, such as C++ templates.
 
-At time of writing this is not fully working - [log.md] details the current variants of these files.
+At time of writing this is not fully working - [log.md](log.md) details the current variants of these files.
