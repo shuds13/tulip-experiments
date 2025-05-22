@@ -4,7 +4,7 @@
 
 Tulip variant of LLVM, CudaFE, Splendid, 
 
-libLLVMCudaFE.so is created from CudaFE.
+`libLLVMCudaFE.so` is created from CudaFE.
 
 For the versions of these packages see [toolchain.md](toolchain.md).
 
@@ -25,7 +25,7 @@ clang -fopenmp -O3 fasten_cpu.cbe.c -o tulip.clang.fasten.exe
 
 ```
 
-Also see [go.sh].
+Also see [go.sh](go.sh).
 
 ## Viewing output
 
@@ -41,15 +41,15 @@ Removed sin/cos functions as these cause failure in LLVM kernel merger (opt -loa
 
 This passes the kernel merge, but fails in the Splendid decompiler. The crash occurs in `llvm_cbe::IfElseRegion::createSubIfElseRegions` when trying to analyze control flow structures, trying to process a value without a name. See [errors/splendid_err1.txt](errors/splendid_err1.txt).
 
-### fasten_simple_1.cu:
+### fasten_simple_1.cu
 
 Very simplified example that makes it through the full tool chain and produces output.
 
 ***Old***: 
  - Simplified logic passes splendid step but fails in the linker when try to compile the generated file `undefined reference to 'cudaMalloc'` suggesting that CUDA calls were not substitued properly.
   - See [errors/linker_error1.txt](errors/linker_error1.txt).
-  - the cudaMallocs were not tagged by Splendid with `!tulip.target.mapdata` as they are for xstack examples.
- - fixed by removing void declarations.
+  - The `cudaMalloc`s were not getting tagged by Splendid (should have `!tulip.target.mapdata`).
+ - Fixed by removing void declarations.
 
 
 
