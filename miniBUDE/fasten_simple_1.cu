@@ -77,8 +77,8 @@ int main(int argc, char** argv)
     cudaMemcpy(h_c, d_c, N * sizeof(float), cudaMemcpyDeviceToHost);
 
     // Verify results
-    printf("Vector addition results:\n");
-    for (int i = 0; i < 3; i++) // Only print first few results
+    printf("Vector addition - first few results:\n");
+    for (int i = 0; i < 10; i++) // Only print first few results
     {
         printf("%.1f + %.1f = %.1f\n", h_a[i], h_b[i], h_c[i]);
     }
@@ -122,8 +122,6 @@ int main(int argc, char** argv)
     cudaMemcpy(d_atoms_b, h_atoms_b, N * sizeof(Atom), cudaMemcpyHostToDevice);
 
     // Execute kernel
-    // const int threadsPerBlock = 256;
-    // int blocksNeeded = num_blocks(N, threadsPerBlock);
     atom_add<<<blocksNeeded, threadsPerBlock>>>(d_atoms_a, d_atoms_b, d_atoms_c, N);
     cudaDeviceSynchronize();
 
@@ -131,8 +129,8 @@ int main(int argc, char** argv)
     cudaMemcpy(h_atoms_c, d_atoms_c, N * sizeof(Atom), cudaMemcpyDeviceToHost);
 
     // Verify results
-    printf("\nAtom addition results:\n");
-    for (int i = 0; i < 3; i++) // Only print first few results
+    printf("\nAtom addition - first few results:\n");
+    for (int i = 0; i < 10; i++) // Only print first few results
     {
         printf("Atom %d: (%.1f,%.1f,%.1f) + (%.1f,%.1f,%.1f) = (%.1f,%.1f,%.1f)\n", 
                i,
