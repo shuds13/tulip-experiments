@@ -37,7 +37,7 @@ Small error logs referred to here can be found in the [errors](errors/) director
 
 Converted c++ to C, including removal of templates.
 
-Removed sin/cos functions as these cause failure in LLVM kernel merger (opt -load ...) - see [errors/sin_cos_err.txt](errors/sin_cos_err.txt).
+Removed sin/cos functions as these cause failure in LLVM kernel merger (opt -load ...) - see [errors/sin_cos_err.txt](errors/sin_cos_err.txt). This means the initial transforms applid to each ligand atom is not correct - but the main enery loop will have the same structure.
 
 This passes the kernel merge, but fails in the Splendid decompiler. The crash occurs in `llvm_cbe::IfElseRegion::createSubIfElseRegions` when trying to analyze control flow structures, trying to process a value without a name. See [errors/splendid_err1.txt](errors/splendid_err1.txt).
 
@@ -113,10 +113,11 @@ For the sake of testing the output, I commented out the sqrt declaration. Code t
 
 See [generated code](generated_c_omp/fasten_cpu.cbe_with_sqrt_removed.c).
 
+Despite genearating a file, the energy calcualtion is missing - seemingly reomved by DCE.
+
+
+
 ## Old versions
-
-
-
 
 ### fasten_simple_1.cu
 
@@ -127,7 +128,3 @@ Very simplified example that makes it through the full tool chain and produces o
   - See [errors/linker_error1.txt](errors/linker_error1.txt).
   - The `cudaMalloc`s were not getting tagged by Splendid (should have `!tulip.target.mapdata`).
  - Fixed by removing void declarations.
-
-
-
-
